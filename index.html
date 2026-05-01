@@ -3,8 +3,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Viewport-fit=cover and user-scalable=no are crucial for locking the layout on Chrome/Safari Tablets -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>The_momd | VisionOS Trading SPA</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -21,11 +23,44 @@
     </script>
 
     <style>
-        body { background-color: #0a0a0f; color: #ffffff; }
+        /* ==========================================================================
+           ULTIMATE MOBILE SPA FIX (Chrome & Safari on iPad/Tablets)
+           ========================================================================== */
+        html, body {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%;
+            overflow: hidden; /* Prevent body scrolling entirely */
+            overscroll-behavior: none; /* Stops Chrome/Safari bounce & address bar shifting */
+            touch-action: none; /* Disables default viewport touch actions */
+            background-color: #0a0a0f; 
+            color: #ffffff; 
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #app-root {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Allow scrolling ONLY inside the main content area */
+        .scrollable-main {
+            flex: 1;
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            overscroll-behavior-y: contain; /* Prevents scroll chaining to the body */
+            touch-action: pan-y; /* Allow vertical scroll */
+        }
+        /* ========================================================================== */
 
         /* --- Mesh Gradient Background --- */
         .mesh-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: -1; overflow: hidden; background: #0a0a0f;
         }
         .mesh-blob {
@@ -78,379 +113,379 @@
         ::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
+<body>
 
-<!-- FIXED INSET-0 prevents iOS Safari from shifting the page up/down when scrolling -->
-<body class="fixed inset-0 flex flex-col md:flex-row overflow-hidden antialiased text-white bg-[#0a0a0f]">
-
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed top-6 right-6 z-50 glass-panel p-4 rounded-xl flex items-center gap-3 hidden border-l-4 border-l-green-400">
-        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        <div>
-            <h4 class="text-sm font-bold text-white">Order Successful</h4>
-            <p id="toastMsg" class="text-xs text-gray-400">Filled at market price.</p>
-        </div>
-    </div>
-
-    <!-- Background -->
-    <div class="mesh-bg">
-        <div class="mesh-blob blob-1"></div>
-        <div class="mesh-blob blob-2"></div>
-        <div class="mesh-blob blob-3"></div>
-    </div>
-
-    <!-- Sidebar (Desktop) -->
-    <aside class="hidden md:flex flex-col w-24 h-[calc(100%-2rem)] m-4 glass-panel items-center py-8 justify-between shrink-0 z-20">
-        <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center border border-white/20 shadow-lg cursor-pointer">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-        </div>
-        <nav class="flex flex-col gap-8 w-full px-4">
-            <button onclick="switchTab('dashboard')" id="nav-desktop-dashboard" class="nav-desktop-item w-full flex justify-center p-3 rounded-2xl bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-            </button>
-            <button onclick="switchTab('portfolio')" id="nav-desktop-portfolio" class="nav-desktop-item w-full flex justify-center p-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-            </button>
-        </nav>
-        <button onclick="switchTab('settings')" id="nav-desktop-settings" class="nav-desktop-item p-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-        </button>
-    </aside>
-
-    <!-- Main Container (Scrolling area) -->
-    <main class="flex-1 h-full overflow-y-auto p-4 md:py-4 md:pr-4 md:pl-0 z-10 pb-24 md:pb-4">
+    <!-- Strict App Root for layout locking -->
+    <div id="app-root" class="flex-col md:flex-row">
         
-        <!-- ========================================== -->
-        <!-- VIEW 1: DASHBOARD                          -->
-        <!-- ========================================== -->
-        <div id="dashboard-view" class="view-section fade-in">
-            <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 pt-2 px-2">
-                <div>
-                    <p class="text-gray-400 text-sm font-medium mb-1">Good evening, Dara</p>
-                    <h1 class="text-3xl md:text-4xl font-semibold tracking-tight text-white/90">Market Dashboard</h1>
-                </div>
-                <div class="mt-4 md:mt-0 text-left md:text-right">
-                    <p class="text-gray-400 text-sm font-medium mb-1">Total Balance</p>
-                    <div class="flex items-baseline gap-3">
-                        <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-white">$1,245,600.00</h2>
-                    </div>
-                </div>
-            </header>
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed top-6 right-6 z-50 glass-panel p-4 rounded-xl flex items-center gap-3 hidden border-l-4 border-l-green-400">
+            <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <div>
+                <h4 class="text-sm font-bold text-white">Order Successful</h4>
+                <p id="toastMsg" class="text-xs text-gray-400">Filled at market price.</p>
+            </div>
+        </div>
 
-            <!-- Added items-start to prevent column stretching issues -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start relative">
-                <!-- Left Column -->
-                <div class="lg:col-span-2 flex flex-col gap-6">
-                    
-                    <!-- Chart Area -->
-                    <div class="glass-panel p-6 flex flex-col h-[400px] relative overflow-hidden">
-                        <!-- Skeleton Loader -->
-                        <div id="chartSkeleton" class="absolute inset-0 z-10 bg-[#0a0a0f]/80 backdrop-blur-sm hidden flex-col justify-end pb-8 px-6">
-                            <div class="w-full h-4/5 skeleton-loader rounded-lg opacity-30"></div>
+        <!-- Background -->
+        <div class="mesh-bg">
+            <div class="mesh-blob blob-1"></div>
+            <div class="mesh-blob blob-2"></div>
+            <div class="mesh-blob blob-3"></div>
+        </div>
+
+        <!-- Sidebar (Desktop) -->
+        <aside class="hidden md:flex flex-col w-24 h-[calc(100%-2rem)] m-4 glass-panel items-center py-8 justify-between shrink-0 z-20">
+            <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center border border-white/20 shadow-lg cursor-pointer">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <nav class="flex flex-col gap-8 w-full px-4">
+                <button onclick="switchTab('dashboard')" id="nav-desktop-dashboard" class="nav-desktop-item w-full flex justify-center p-3 rounded-2xl bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                </button>
+                <button onclick="switchTab('portfolio')" id="nav-desktop-portfolio" class="nav-desktop-item w-full flex justify-center p-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </button>
+            </nav>
+            <button onclick="switchTab('settings')" id="nav-desktop-settings" class="nav-desktop-item p-3 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+        </aside>
+
+        <!-- Main Content Area (Scrolls independently) -->
+        <main class="scrollable-main p-4 md:py-4 md:pr-4 md:pl-0 z-10 pb-24 md:pb-4">
+            
+            <!-- ========================================== -->
+            <!-- VIEW 1: DASHBOARD                          -->
+            <!-- ========================================== -->
+            <div id="dashboard-view" class="view-section fade-in">
+                <header class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 pt-2 px-2">
+                    <div>
+                        <p class="text-gray-400 text-sm font-medium mb-1">Good evening, Dara</p>
+                        <h1 class="text-3xl md:text-4xl font-semibold tracking-tight text-white/90">Market Dashboard</h1>
+                    </div>
+                    <div class="mt-4 md:mt-0 text-left md:text-right">
+                        <p class="text-gray-400 text-sm font-medium mb-1">Total Balance</p>
+                        <div class="flex items-baseline gap-3">
+                            <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-white">$1,245,600.00</h2>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start relative">
+                    <!-- Left Column -->
+                    <div class="lg:col-span-2 flex flex-col gap-6">
+                        
+                        <!-- Chart Area -->
+                        <div class="glass-panel p-6 flex flex-col h-[400px] relative overflow-hidden">
+                            <!-- Skeleton Loader -->
+                            <div id="chartSkeleton" class="absolute inset-0 z-10 bg-[#0a0a0f]/80 backdrop-blur-sm hidden flex-col justify-end pb-8 px-6">
+                                <div class="w-full h-4/5 skeleton-loader rounded-lg opacity-30"></div>
+                            </div>
+
+                            <!-- Chart Header -->
+                            <div class="flex justify-between items-center mb-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                                        <svg class="w-5 h-5 text-blue-400" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-white">ETH / USD</h3>
+                                        <p class="text-xs text-gray-400" id="currentPriceDisplay">2,266.99 USD</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Controls -->
+                                <div class="flex items-center gap-4">
+                                    <div class="flex gap-1 bg-white/5 p-1 rounded-lg border border-white/10" id="chartTabs">
+                                        <button onclick="changeChartTimeframe(this)" class="px-2 py-1 rounded-md text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all">1H</button>
+                                        <button onclick="changeChartTimeframe(this)" class="px-2 py-1 rounded-md text-xs font-medium bg-white/10 text-white shadow-sm border border-white/5 active-tab">1D</button>
+                                        <button onclick="changeChartTimeframe(this)" class="px-2 py-1 rounded-md text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all">1W</button>
+                                    </div>
+                                    <div class="flex gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
+                                        <button onclick="switchChartStyle('line')" id="btn-chart-line" class="p-1.5 rounded-md bg-white/10 text-white shadow-sm transition-all" title="Line Chart">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                                        </button>
+                                        <button onclick="switchChartStyle('candle')" id="btn-chart-candle" class="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-all" title="Candlestick Chart">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Charts Container -->
+                            <div class="flex-1 relative w-full mt-2">
+                                
+                                <!-- Line Chart SVG -->
+                                <div id="chart-line-view" class="absolute inset-0 w-full h-full fade-in">
+                                    <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 500 150">
+                                        <defs><linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(147, 197, 253, 0.3)" /><stop offset="100%" stop-color="rgba(147, 197, 253, 0)" /></linearGradient></defs>
+                                        <path d="M0,150 L0,100 C50,120 100,60 150,80 C200,100 250,30 300,50 C350,70 400,20 450,40 L500,20 L500,150 Z" fill="url(#chartGradient)" />
+                                        <path d="M0,100 C50,120 100,60 150,80 C200,100 250,30 300,50 C350,70 400,20 450,40 L500,20" fill="none" stroke="rgba(147, 197, 253, 0.8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <div class="absolute right-0 top-[10%] flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.8)] animate-pulse"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Candlestick Chart SVG -->
+                                <div id="chart-candle-view" class="absolute inset-0 w-full h-full hidden fade-in">
+                                    <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 500 150">
+                                        <line x1="20" y1="85" x2="20" y2="115" stroke="#34d399" stroke-width="1.5"/>
+                                        <line x1="60" y1="80" x2="60" y2="120" stroke="#f87171" stroke-width="1.5"/>
+                                        <line x1="100" y1="70" x2="100" y2="115" stroke="#34d399" stroke-width="1.5"/>
+                                        <line x1="140" y1="65" x2="140" y2="90" stroke="#34d399" stroke-width="1.5"/>
+                                        <line x1="180" y1="60" x2="180" y2="95" stroke="#f87171" stroke-width="1.5"/>
+                                        <line x1="220" y1="40" x2="220" y2="95" stroke="#34d399" stroke-width="1.5"/>
+                                        <line x1="260" y1="25" x2="260" y2="60" stroke="#34d399" stroke-width="1.5"/>
+                                        <line x1="300" y1="20" x2="300" y2="65" stroke="#f87171" stroke-width="1.5"/>
+                                        <line x1="340" y1="35" x2="340" y2="70" stroke="#34d399" stroke-width="1.5"/>
+                                        <line x1="380" y1="15" x2="380" y2="50" stroke="#34d399" stroke-width="1.5"/>
+                                        <line x1="420" y1="10" x2="420" y2="45" stroke="#f87171" stroke-width="1.5"/>
+                                        <line x1="460" y1="5"  x2="460" y2="45" stroke="#34d399" stroke-width="1.5"/>
+
+                                        <rect x="14" y="90" width="12" height="15" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
+                                        <rect x="54" y="95" width="12" height="15" rx="2" fill="#f87171" stroke="#f87171" stroke-width="1.5"/> 
+                                        <rect x="94" y="80" width="12" height="30" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
+                                        <rect x="134" y="70" width="12" height="15" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
+                                        <rect x="174" y="70" width="12" height="20" rx="2" fill="#f87171" stroke="#f87171" stroke-width="1.5"/> 
+                                        <rect x="214" y="50" width="12" height="35" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
+                                        <rect x="254" y="35" width="12" height="20" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
+                                        <rect x="294" y="35" width="12" height="20" rx="2" fill="#f87171" stroke="#f87171" stroke-width="1.5"/> 
+                                        <rect x="334" y="40" width="12" height="20" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
+                                        <rect x="374" y="25" width="12" height="20" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
+                                        <rect x="414" y="25" width="12" height="15" rx="2" fill="#f87171" stroke="#f87171" stroke-width="1.5"/> 
+                                        <rect x="454" y="15" width="12" height="20" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
+                                    </svg>
+                                    <div class="absolute right-0 top-[3%] flex items-center gap-2">
+                                        <span class="w-full h-[1px] bg-emerald-400/50 absolute -left-full width-[200px] border-dashed border-b border-emerald-400/50"></span>
+                                        <span class="text-xs font-semibold bg-emerald-400/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-400/30">2266.99</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Chart Header -->
-                        <div class="flex justify-between items-center mb-6">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
-                                    <svg class="w-5 h-5 text-blue-400" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z"/></svg>
+                        <!-- Market Overview -->
+                        <div class="glass-panel p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-base font-semibold text-white/90">Market Overview</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="text-xs text-gray-400 border-b border-white/5">
+                                            <th class="pb-3 font-medium">Asset</th>
+                                            <th class="pb-3 font-medium">Price</th>
+                                            <th class="pb-3 font-medium text-right">24h Change</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-sm">
+                                        <tr class="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group">
+                                            <td class="py-4 flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center"><span class="text-orange-400 text-xs font-bold">₿</span></div>
+                                                <span class="font-medium text-white/90">BTC/USDT</span>
+                                            </td>
+                                            <td class="py-4 text-gray-200 font-medium" id="price-btc">76,560.54</td>
+                                            <td class="py-4 text-right text-emerald-400">+1.24%</td>
+                                        </tr>
+                                        <tr class="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group">
+                                            <td class="py-4 flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center"><span class="text-yellow-400 text-xs font-bold">Au</span></div>
+                                                <span class="font-medium text-white/90">XAU/USD</span>
+                                            </td>
+                                            <td class="py-4 text-gray-200 font-medium" id="price-xau">4,628.90</td>
+                                            <td class="py-4 text-right text-rose-400">-0.45%</td>
+                                        </tr>
+                                        <tr class="hover:bg-white/5 transition-colors cursor-pointer group">
+                                            <td class="py-4 flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center"><span class="text-indigo-400 text-xs font-bold">€</span></div>
+                                                <span class="font-medium text-white/90">EUR/USD</span>
+                                            </td>
+                                            <td class="py-4 text-gray-200 font-medium" id="price-eur">1.16973</td>
+                                            <td class="py-4 text-right text-emerald-400">+0.12%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column (Order Book) - Sticky Position -->
+                    <div class="lg:col-span-1 lg:sticky lg:top-4">
+                        <div class="glass-panel p-6 flex flex-col">
+                            <h3 class="text-base font-semibold text-white/90 mb-6">Trade ETH</h3>
+                            <div class="flex p-1 bg-black/30 rounded-xl mb-6 border border-white/5">
+                                <button id="tabBuy" onclick="switchOrderType('buy')" class="flex-1 py-2 text-sm font-medium rounded-lg bg-white/10 text-white shadow-sm border border-white/5 transition-all">Buy</button>
+                                <button id="tabSell" onclick="switchOrderType('sell')" class="flex-1 py-2 text-sm font-medium rounded-lg text-gray-400 hover:text-white transition-all">Sell</button>
+                            </div>
+                            <div class="flex flex-col gap-4 flex-1">
+                                <div>
+                                    <label class="text-xs text-gray-400 mb-1.5 block">Price (USD)</label>
+                                    <div class="relative">
+                                        <input type="text" id="orderPrice" value="2,266.99" class="w-full glass-input rounded-xl py-3 pl-4 pr-12 text-sm font-medium" disabled>
+                                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500">USD</span>
+                                    </div>
                                 </div>
                                 <div>
-                                    <h3 class="text-lg font-semibold text-white">ETH / USD</h3>
-                                    <p class="text-xs text-gray-400" id="currentPriceDisplay">2,266.99 USD</p>
+                                    <label class="text-xs text-gray-400 mb-1.5 block">Amount (ETH)</label>
+                                    <div class="relative">
+                                        <input type="number" id="orderAmount" value="10.5" class="w-full glass-input rounded-xl py-3 pl-4 pr-12 text-sm font-medium focus:ring-1 focus:ring-blue-500/50">
+                                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500">ETH</span>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Controls -->
-                            <div class="flex items-center gap-4">
-                                <!-- Timeframes -->
-                                <div class="flex gap-1 bg-white/5 p-1 rounded-lg border border-white/10" id="chartTabs">
-                                    <button onclick="changeChartTimeframe(this)" class="px-2 py-1 rounded-md text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all">1H</button>
-                                    <button onclick="changeChartTimeframe(this)" class="px-2 py-1 rounded-md text-xs font-medium bg-white/10 text-white shadow-sm border border-white/5 active-tab">1D</button>
-                                    <button onclick="changeChartTimeframe(this)" class="px-2 py-1 rounded-md text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-all">1W</button>
+                                <div class="mt-2">
+                                    <input type="range" id="amountSlider" min="0" max="100" value="25" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-400">
+                                    <div class="flex justify-between text-[10px] text-gray-500 mt-2">
+                                        <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+                                    </div>
                                 </div>
-                                <!-- Chart Style Toggles -->
-                                <div class="flex gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
-                                    <button onclick="switchChartStyle('line')" id="btn-chart-line" class="p-1.5 rounded-md bg-white/10 text-white shadow-sm transition-all" title="Line Chart">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                                <div class="pt-6 mt-4 border-t border-white/5">
+                                    <div class="flex justify-between text-xs mb-4">
+                                        <span class="text-gray-400">Total Value</span>
+                                        <span id="totalOrderValue" class="text-white font-medium">23,803.39 USD</span>
+                                    </div>
+                                    <button id="submitOrderBtn" onclick="processOrder()" class="w-full py-3.5 rounded-xl font-semibold text-sm bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 border border-blue-500/30 shadow-lg backdrop-blur-md transition-all active:scale-[0.98]">
+                                        Buy ETH
                                     </button>
-                                    <button onclick="switchChartStyle('candle')" id="btn-chart-candle" class="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition-all" title="Candlestick Chart">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Charts Container -->
-                        <div class="flex-1 relative w-full mt-2">
-                            
-                            <!-- 1. Line Chart SVG -->
-                            <div id="chart-line-view" class="absolute inset-0 w-full h-full fade-in">
-                                <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 500 150">
-                                    <defs><linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(147, 197, 253, 0.3)" /><stop offset="100%" stop-color="rgba(147, 197, 253, 0)" /></linearGradient></defs>
-                                    <path d="M0,150 L0,100 C50,120 100,60 150,80 C200,100 250,30 300,50 C350,70 400,20 450,40 L500,20 L500,150 Z" fill="url(#chartGradient)" />
-                                    <path d="M0,100 C50,120 100,60 150,80 C200,100 250,30 300,50 C350,70 400,20 450,40 L500,20" fill="none" stroke="rgba(147, 197, 253, 0.8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                <div class="absolute right-0 top-[10%] flex items-center gap-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.8)] animate-pulse"></span>
-                                </div>
-                            </div>
-
-                            <!-- 2. Candlestick Chart SVG -->
-                            <div id="chart-candle-view" class="absolute inset-0 w-full h-full hidden fade-in">
-                                <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 500 150">
-                                    <line x1="20" y1="85" x2="20" y2="115" stroke="#34d399" stroke-width="1.5"/>
-                                    <line x1="60" y1="80" x2="60" y2="120" stroke="#f87171" stroke-width="1.5"/>
-                                    <line x1="100" y1="70" x2="100" y2="115" stroke="#34d399" stroke-width="1.5"/>
-                                    <line x1="140" y1="65" x2="140" y2="90" stroke="#34d399" stroke-width="1.5"/>
-                                    <line x1="180" y1="60" x2="180" y2="95" stroke="#f87171" stroke-width="1.5"/>
-                                    <line x1="220" y1="40" x2="220" y2="95" stroke="#34d399" stroke-width="1.5"/>
-                                    <line x1="260" y1="25" x2="260" y2="60" stroke="#34d399" stroke-width="1.5"/>
-                                    <line x1="300" y1="20" x2="300" y2="65" stroke="#f87171" stroke-width="1.5"/>
-                                    <line x1="340" y1="35" x2="340" y2="70" stroke="#34d399" stroke-width="1.5"/>
-                                    <line x1="380" y1="15" x2="380" y2="50" stroke="#34d399" stroke-width="1.5"/>
-                                    <line x1="420" y1="10" x2="420" y2="45" stroke="#f87171" stroke-width="1.5"/>
-                                    <line x1="460" y1="5"  x2="460" y2="45" stroke="#34d399" stroke-width="1.5"/>
-
-                                    <rect x="14" y="90" width="12" height="15" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
-                                    <rect x="54" y="95" width="12" height="15" rx="2" fill="#f87171" stroke="#f87171" stroke-width="1.5"/> 
-                                    <rect x="94" y="80" width="12" height="30" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
-                                    <rect x="134" y="70" width="12" height="15" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
-                                    <rect x="174" y="70" width="12" height="20" rx="2" fill="#f87171" stroke="#f87171" stroke-width="1.5"/> 
-                                    <rect x="214" y="50" width="12" height="35" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
-                                    <rect x="254" y="35" width="12" height="20" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
-                                    <rect x="294" y="35" width="12" height="20" rx="2" fill="#f87171" stroke="#f87171" stroke-width="1.5"/> 
-                                    <rect x="334" y="40" width="12" height="20" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
-                                    <rect x="374" y="25" width="12" height="20" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
-                                    <rect x="414" y="25" width="12" height="15" rx="2" fill="#f87171" stroke="#f87171" stroke-width="1.5"/> 
-                                    <rect x="454" y="15" width="12" height="20" rx="2" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/> 
-                                </svg>
-                                <div class="absolute right-0 top-[3%] flex items-center gap-2">
-                                    <span class="w-full h-[1px] bg-emerald-400/50 absolute -left-full width-[200px] border-dashed border-b border-emerald-400/50"></span>
-                                    <span class="text-xs font-semibold bg-emerald-400/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-400/30">2266.99</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Market Overview -->
-                    <div class="glass-panel p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-base font-semibold text-white/90">Market Overview</h3>
+            <!-- ========================================== -->
+            <!-- VIEW 2: PORTFOLIO                          -->
+            <!-- ========================================== -->
+            <div id="portfolio-view" class="view-section hidden fade-in h-full flex flex-col">
+                <header class="mb-8 pt-2 px-2">
+                    <h1 class="text-3xl md:text-4xl font-semibold tracking-tight text-white/90">Your Portfolio</h1>
+                    <p class="text-gray-400 text-sm mt-2">Asset allocation and performance analysis</p>
+                </header>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                    <div class="lg:col-span-1 glass-panel p-6 flex flex-col items-center justify-center">
+                        <h3 class="text-base font-semibold text-white/90 mb-6 w-full text-left">Allocation</h3>
+                        <div class="relative w-48 h-48 mb-6">
+                            <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90 drop-shadow-xl">
+                                <path class="text-orange-400" stroke-dasharray="55, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"/>
+                                <path class="text-blue-400" stroke-dasharray="30, 100" stroke-dashoffset="-55" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"/>
+                                <path class="text-emerald-400" stroke-dasharray="15, 100" stroke-dashoffset="-85" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"/>
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                <span class="text-2xl font-bold text-white">3</span>
+                                <span class="text-[10px] text-gray-400 uppercase tracking-widest">Assets</span>
+                            </div>
                         </div>
+                        <div class="w-full space-y-3">
+                            <div class="flex justify-between items-center text-sm"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-orange-400"></span><span class="text-gray-300">Bitcoin</span></div><span class="font-medium text-white">55%</span></div>
+                            <div class="flex justify-between items-center text-sm"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span><span class="text-gray-300">Ethereum</span></div><span class="font-medium text-white">30%</span></div>
+                            <div class="flex justify-between items-center text-sm"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span><span class="text-gray-300">USDT</span></div><span class="font-medium text-white">15%</span></div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2 glass-panel p-6">
+                        <h3 class="text-base font-semibold text-white/90 mb-6">Asset Balances</h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="text-xs text-gray-400 border-b border-white/5">
                                         <th class="pb-3 font-medium">Asset</th>
-                                        <th class="pb-3 font-medium">Price</th>
-                                        <th class="pb-3 font-medium text-right">24h Change</th>
+                                        <th class="pb-3 font-medium">Balance</th>
+                                        <th class="pb-3 font-medium">Value (USD)</th>
+                                        <th class="pb-3 font-medium text-right">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody class="text-sm">
-                                    <tr class="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group">
-                                        <td class="py-4 flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center"><span class="text-orange-400 text-xs font-bold">₿</span></div>
-                                            <span class="font-medium text-white/90">BTC/USDT</span>
+                                    <tr class="border-b border-white/5 hover:bg-white/5 transition-colors group">
+                                        <td class="py-5 flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center"><span class="text-orange-400 text-sm font-bold">₿</span></div>
+                                            <div><span class="font-semibold text-white block">Bitcoin</span><span class="text-xs text-gray-400">BTC</span></div>
                                         </td>
-                                        <td class="py-4 text-gray-200 font-medium" id="price-btc">76,560.54</td>
-                                        <td class="py-4 text-right text-emerald-400">+1.24%</td>
+                                        <td class="py-5 text-gray-200 font-medium">8.95012</td>
+                                        <td class="py-5 text-gray-200 font-medium">$685,230.00</td>
+                                        <td class="py-5 text-right"><button onclick="switchTab('dashboard')" class="px-4 py-1.5 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 transition-all">Trade</button></td>
                                     </tr>
-                                    <tr class="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group">
-                                        <td class="py-4 flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center"><span class="text-yellow-400 text-xs font-bold">Au</span></div>
-                                            <span class="font-medium text-white/90">XAU/USD</span>
+                                    <tr class="border-b border-white/5 hover:bg-white/5 transition-colors group">
+                                        <td class="py-5 flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center"><svg class="w-5 h-5 text-blue-400" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z"/></svg></div>
+                                            <div><span class="font-semibold text-white block">Ethereum</span><span class="text-xs text-gray-400">ETH</span></div>
                                         </td>
-                                        <td class="py-4 text-gray-200 font-medium" id="price-xau">4,628.90</td>
-                                        <td class="py-4 text-right text-rose-400">-0.45%</td>
+                                        <td class="py-5 text-gray-200 font-medium">165.200</td>
+                                        <td class="py-5 text-gray-200 font-medium">$374,530.00</td>
+                                        <td class="py-5 text-right"><button onclick="switchTab('dashboard')" class="px-4 py-1.5 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 transition-all">Trade</button></td>
                                     </tr>
-                                    <tr class="hover:bg-white/5 transition-colors cursor-pointer group">
-                                        <td class="py-4 flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center"><span class="text-indigo-400 text-xs font-bold">€</span></div>
-                                            <span class="font-medium text-white/90">EUR/USD</span>
+                                    <tr class="hover:bg-white/5 transition-colors group">
+                                        <td class="py-5 flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-emerald-400 text-sm font-bold">$</span></div>
+                                            <div><span class="font-semibold text-white block">Tether</span><span class="text-xs text-gray-400">USDT</span></div>
                                         </td>
-                                        <td class="py-4 text-gray-200 font-medium" id="price-eur">1.16973</td>
-                                        <td class="py-4 text-right text-emerald-400">+0.12%</td>
+                                        <td class="py-5 text-gray-200 font-medium">185,840.00</td>
+                                        <td class="py-5 text-gray-200 font-medium">$185,840.00</td>
+                                        <td class="py-5 text-right"><button onclick="switchTab('dashboard')" class="px-4 py-1.5 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 transition-all">Trade</button></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Right Column (Order Book) - Sticky Position for iPad scrolling -->
-                <div class="lg:col-span-1 lg:sticky lg:top-4">
-                    <div class="glass-panel p-6 flex flex-col">
-                        <h3 class="text-base font-semibold text-white/90 mb-6">Trade ETH</h3>
-                        <div class="flex p-1 bg-black/30 rounded-xl mb-6 border border-white/5">
-                            <button id="tabBuy" onclick="switchOrderType('buy')" class="flex-1 py-2 text-sm font-medium rounded-lg bg-white/10 text-white shadow-sm border border-white/5 transition-all">Buy</button>
-                            <button id="tabSell" onclick="switchOrderType('sell')" class="flex-1 py-2 text-sm font-medium rounded-lg text-gray-400 hover:text-white transition-all">Sell</button>
+            <!-- ========================================== -->
+            <!-- VIEW 3: SETTINGS                           -->
+            <!-- ========================================== -->
+            <div id="settings-view" class="view-section hidden fade-in h-full flex flex-col">
+                <header class="mb-8 pt-2 px-2">
+                    <h1 class="text-3xl md:text-4xl font-semibold tracking-tight text-white/90">Settings</h1>
+                    <p class="text-gray-400 text-sm mt-2">Manage your account and preferences</p>
+                </header>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+                    <div class="glass-panel p-6 flex items-center gap-6">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-1">
+                            <div class="w-full h-full rounded-full bg-[#0a0a0f] flex items-center justify-center overflow-hidden">
+                                <svg class="w-10 h-10 text-gray-400 mt-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                            </div>
                         </div>
-                        <div class="flex flex-col gap-4 flex-1">
-                            <div>
-                                <label class="text-xs text-gray-400 mb-1.5 block">Price (USD)</label>
-                                <div class="relative">
-                                    <input type="text" id="orderPrice" value="2,266.99" class="w-full glass-input rounded-xl py-3 pl-4 pr-12 text-sm font-medium" disabled>
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500">USD</span>
-                                </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-white">Dara Custos</h2>
+                            <p class="text-sm text-gray-400 mb-3">Premium Account</p>
+                            <button class="px-4 py-1.5 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 border border-white/10 transition-all">Edit Profile</button>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-6">
+                        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">Preferences</h3>
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between">
+                                <div><span class="block text-white font-medium text-sm">Push Notifications</span><span class="text-xs text-gray-500">Receive alerts for executed trades</span></div>
+                                <label class="flex items-center cursor-pointer"><div class="relative"><input type="checkbox" class="sr-only toggle-checkbox" checked><div class="block w-12 h-7 rounded-full border border-white/10 bg-white/10 toggle-label"></div><div class="toggle-dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full shadow-sm"></div></div></label>
                             </div>
-                            <div>
-                                <label class="text-xs text-gray-400 mb-1.5 block">Amount (ETH)</label>
-                                <div class="relative">
-                                    <input type="number" id="orderAmount" value="10.5" class="w-full glass-input rounded-xl py-3 pl-4 pr-12 text-sm font-medium focus:ring-1 focus:ring-blue-500/50">
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500">ETH</span>
-                                </div>
+                            <div class="flex items-center justify-between">
+                                <div><span class="block text-white font-medium text-sm">Two-Factor Auth (2FA)</span><span class="text-xs text-gray-500">Enhanced account security</span></div>
+                                <label class="flex items-center cursor-pointer"><div class="relative"><input type="checkbox" class="sr-only toggle-checkbox" checked><div class="block w-12 h-7 rounded-full border border-white/10 bg-white/10 toggle-label"></div><div class="toggle-dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full shadow-sm"></div></div></label>
                             </div>
-                            <div class="mt-2">
-                                <input type="range" id="amountSlider" min="0" max="100" value="25" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-400">
-                                <div class="flex justify-between text-[10px] text-gray-500 mt-2">
-                                    <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
-                                </div>
-                            </div>
-                            <div class="pt-6 mt-4 border-t border-white/5">
-                                <div class="flex justify-between text-xs mb-4">
-                                    <span class="text-gray-400">Total Value</span>
-                                    <span id="totalOrderValue" class="text-white font-medium">23,803.39 USD</span>
-                                </div>
-                                <button id="submitOrderBtn" onclick="processOrder()" class="w-full py-3.5 rounded-xl font-semibold text-sm bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 border border-blue-500/30 shadow-lg backdrop-blur-md transition-all active:scale-[0.98]">
-                                    Buy ETH
-                                </button>
+                            <div class="flex items-center justify-between">
+                                <div><span class="block text-white font-medium text-sm">Auto-Lock Dashboard</span><span class="text-xs text-gray-500">Lock after 5 mins of inactivity</span></div>
+                                <label class="flex items-center cursor-pointer"><div class="relative"><input type="checkbox" class="sr-only toggle-checkbox"><div class="block w-12 h-7 rounded-full border border-white/10 bg-white/10 toggle-label"></div><div class="toggle-dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full shadow-sm"></div></div></label>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ========================================== -->
-        <!-- VIEW 2: PORTFOLIO                          -->
-        <!-- ========================================== -->
-        <div id="portfolio-view" class="view-section hidden fade-in h-full flex flex-col">
-            <header class="mb-8 pt-2 px-2">
-                <h1 class="text-3xl md:text-4xl font-semibold tracking-tight text-white/90">Your Portfolio</h1>
-                <p class="text-gray-400 text-sm mt-2">Asset allocation and performance analysis</p>
-            </header>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                <div class="lg:col-span-1 glass-panel p-6 flex flex-col items-center justify-center">
-                    <h3 class="text-base font-semibold text-white/90 mb-6 w-full text-left">Allocation</h3>
-                    <div class="relative w-48 h-48 mb-6">
-                        <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90 drop-shadow-xl">
-                            <path class="text-orange-400" stroke-dasharray="55, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"/>
-                            <path class="text-blue-400" stroke-dasharray="30, 100" stroke-dashoffset="-55" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"/>
-                            <path class="text-emerald-400" stroke-dasharray="15, 100" stroke-dashoffset="-85" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"/>
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                            <span class="text-2xl font-bold text-white">3</span>
-                            <span class="text-[10px] text-gray-400 uppercase tracking-widest">Assets</span>
-                        </div>
-                    </div>
-                    <div class="w-full space-y-3">
-                        <div class="flex justify-between items-center text-sm"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-orange-400"></span><span class="text-gray-300">Bitcoin</span></div><span class="font-medium text-white">55%</span></div>
-                        <div class="flex justify-between items-center text-sm"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span><span class="text-gray-300">Ethereum</span></div><span class="font-medium text-white">30%</span></div>
-                        <div class="flex justify-between items-center text-sm"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span><span class="text-gray-300">USDT</span></div><span class="font-medium text-white">15%</span></div>
-                    </div>
-                </div>
-                <div class="lg:col-span-2 glass-panel p-6">
-                    <h3 class="text-base font-semibold text-white/90 mb-6">Asset Balances</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="text-xs text-gray-400 border-b border-white/5">
-                                    <th class="pb-3 font-medium">Asset</th>
-                                    <th class="pb-3 font-medium">Balance</th>
-                                    <th class="pb-3 font-medium">Value (USD)</th>
-                                    <th class="pb-3 font-medium text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-sm">
-                                <tr class="border-b border-white/5 hover:bg-white/5 transition-colors group">
-                                    <td class="py-5 flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center"><span class="text-orange-400 text-sm font-bold">₿</span></div>
-                                        <div><span class="font-semibold text-white block">Bitcoin</span><span class="text-xs text-gray-400">BTC</span></div>
-                                    </td>
-                                    <td class="py-5 text-gray-200 font-medium">8.95012</td>
-                                    <td class="py-5 text-gray-200 font-medium">$685,230.00</td>
-                                    <td class="py-5 text-right"><button onclick="switchTab('dashboard')" class="px-4 py-1.5 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 transition-all">Trade</button></td>
-                                </tr>
-                                <tr class="border-b border-white/5 hover:bg-white/5 transition-colors group">
-                                    <td class="py-5 flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center"><svg class="w-5 h-5 text-blue-400" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z"/></svg></div>
-                                        <div><span class="font-semibold text-white block">Ethereum</span><span class="text-xs text-gray-400">ETH</span></div>
-                                    </td>
-                                    <td class="py-5 text-gray-200 font-medium">165.200</td>
-                                    <td class="py-5 text-gray-200 font-medium">$374,530.00</td>
-                                    <td class="py-5 text-right"><button onclick="switchTab('dashboard')" class="px-4 py-1.5 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 transition-all">Trade</button></td>
-                                </tr>
-                                <tr class="hover:bg-white/5 transition-colors group">
-                                    <td class="py-5 flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center"><span class="text-emerald-400 text-sm font-bold">$</span></div>
-                                        <div><span class="font-semibold text-white block">Tether</span><span class="text-xs text-gray-400">USDT</span></div>
-                                    </td>
-                                    <td class="py-5 text-gray-200 font-medium">185,840.00</td>
-                                    <td class="py-5 text-gray-200 font-medium">$185,840.00</td>
-                                    <td class="py-5 text-right"><button onclick="switchTab('dashboard')" class="px-4 py-1.5 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 transition-all">Trade</button></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </main>
 
-        <!-- ========================================== -->
-        <!-- VIEW 3: SETTINGS                           -->
-        <!-- ========================================== -->
-        <div id="settings-view" class="view-section hidden fade-in h-full flex flex-col">
-            <header class="mb-8 pt-2 px-2">
-                <h1 class="text-3xl md:text-4xl font-semibold tracking-tight text-white/90">Settings</h1>
-                <p class="text-gray-400 text-sm mt-2">Manage your account and preferences</p>
-            </header>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
-                <div class="glass-panel p-6 flex items-center gap-6">
-                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-1">
-                        <div class="w-full h-full rounded-full bg-[#0a0a0f] flex items-center justify-center overflow-hidden">
-                            <svg class="w-10 h-10 text-gray-400 mt-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
-                        </div>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-bold text-white">Dara Custos</h2>
-                        <p class="text-sm text-gray-400 mb-3">Premium Account</p>
-                        <button class="px-4 py-1.5 rounded-lg bg-white/10 text-white text-xs hover:bg-white/20 border border-white/10 transition-all">Edit Profile</button>
-                    </div>
-                </div>
-                <div class="glass-panel p-6">
-                    <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">Preferences</h3>
-                    <div class="space-y-6">
-                        <div class="flex items-center justify-between">
-                            <div><span class="block text-white font-medium text-sm">Push Notifications</span><span class="text-xs text-gray-500">Receive alerts for executed trades</span></div>
-                            <label class="flex items-center cursor-pointer"><div class="relative"><input type="checkbox" class="sr-only toggle-checkbox" checked><div class="block w-12 h-7 rounded-full border border-white/10 bg-white/10 toggle-label"></div><div class="toggle-dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full shadow-sm"></div></div></label>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div><span class="block text-white font-medium text-sm">Two-Factor Auth (2FA)</span><span class="text-xs text-gray-500">Enhanced account security</span></div>
-                            <label class="flex items-center cursor-pointer"><div class="relative"><input type="checkbox" class="sr-only toggle-checkbox" checked><div class="block w-12 h-7 rounded-full border border-white/10 bg-white/10 toggle-label"></div><div class="toggle-dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full shadow-sm"></div></div></label>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div><span class="block text-white font-medium text-sm">Auto-Lock Dashboard</span><span class="text-xs text-gray-500">Lock after 5 mins of inactivity</span></div>
-                            <label class="flex items-center cursor-pointer"><div class="relative"><input type="checkbox" class="sr-only toggle-checkbox"><div class="block w-12 h-7 rounded-full border border-white/10 bg-white/10 toggle-label"></div><div class="toggle-dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full shadow-sm"></div></div></label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Mobile Bottom Nav - Fixed at bottom safely -->
+        <nav class="md:hidden fixed bottom-0 left-0 w-full glass-panel !rounded-none !border-x-0 !border-b-0 flex justify-between items-center z-50">
+            <button onclick="switchTab('dashboard')" id="nav-mobile-dashboard" class="nav-mobile-item flex-1 py-4 text-white flex justify-center transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            </button>
+            <button onclick="switchTab('portfolio')" id="nav-mobile-portfolio" class="nav-mobile-item flex-1 py-4 text-gray-500 flex justify-center transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            </button>
+            <button onclick="switchTab('settings')" id="nav-mobile-settings" class="nav-mobile-item flex-1 py-4 text-gray-500 flex justify-center transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+        </nav>
 
-    </main>
-
-    <!-- Mobile Bottom Nav -->
-    <nav class="md:hidden fixed bottom-0 left-0 w-full glass-panel !rounded-none !border-x-0 !border-b-0 flex justify-between items-center z-50">
-        <button onclick="switchTab('dashboard')" id="nav-mobile-dashboard" class="nav-mobile-item flex-1 py-4 text-white flex justify-center transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-        </button>
-        <button onclick="switchTab('portfolio')" id="nav-mobile-portfolio" class="nav-mobile-item flex-1 py-4 text-gray-500 flex justify-center transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-        </button>
-        <button onclick="switchTab('settings')" id="nav-mobile-settings" class="nav-mobile-item flex-1 py-4 text-gray-500 flex justify-center transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-        </button>
-    </nav>
+    </div>
 
     <!-- Scripts -->
     <script>
@@ -582,5 +617,3 @@
     </script>
 </body>
 </html>
-
-```
